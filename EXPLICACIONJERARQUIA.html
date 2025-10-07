@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Jerarquía de Operaciones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        parentheses: '#FF6B6B',
+                        exponents: '#4ECDC4',
+                        multiplication: '#45B7D1',
+                        division: '#96CEB4',
+                        addition: '#FFEAA7',
+                        subtraction: '#DDA0DD'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-gray-900 min-h-screen font-sans">
+    <script>
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+                📊 Simulador de Jerarquía de Operaciones
+            </h1>
+            <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+                Observa paso a paso cómo se resuelven las operaciones siguiendo el orden correcto
+            </p>
+            
+            <!-- Leyenda de colores -->
+            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">Leyenda de Colores:</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 text-sm">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 bg-red-400 rounded"></div>
+                        <span class="text-gray-700 dark:text-gray-300">Paréntesis [ ]</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 bg-teal-400 rounded"></div>
+                        <span class="text-gray-700 dark:text-gray-300">Exponentes ^</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 bg-blue-400 rounded"></div>
+                        <span class="text-gray-700 dark:text-gray-300">Multiplicación ×</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 bg-green-400 rounded"></div>
+                        <span class="text-gray-700 dark:text-gray-300">División ÷</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 bg-yellow-400 rounded"></div>
+                        <span class="text-gray-700 dark:text-gray-300">Suma +</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 bg-purple-300 rounded"></div>
+                        <span class="text-gray-700 dark:text-gray-300">Resta −</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selectores de ejercicio -->
+        <div class="mb-6">
+            <label class="block text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Selecciona un ejercicio:</label>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="loadExercise(1)" class="exercise-btn bg-primary text-white px-4 py-3 rounded-lg hover:bg-purple-600 transition-colors font-mono text-sm">
+                    (−2)⁴÷4+[6−(−3)×(−2)]×3
+                </button>
+                <button onclick="loadExercise(2)" class="exercise-btn bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors font-mono text-sm">
+                    [(−6)+4×(−3)]÷(−2)+(−3)³
+                </button>
+                <button onclick="loadExercise(3)" class="exercise-btn bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors font-mono text-sm">
+                    (−5)²−[(−4)³÷8−(−2)²]×3
+                </button>
+            </div>
+        </div>
+
+        <!-- Controles -->
+        <div class="flex flex-wrap justify-center gap-4 mb-8">
+            <button id="prevBtn" onclick="previousStep()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                ← Paso Anterior
+            </button>
+            <button id="nextBtn" onclick="nextStep()" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                Siguiente Paso →
+            </button>
+            <button onclick="resetAnimation()" class="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                🔄 Reiniciar
+            </button>
+        </div>
+
+        <!-- Área de visualización -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+            <div class="text-center">
+                <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Paso <span id="stepNumber">0</span> de <span id="totalSteps">0</span>
+                </div>
+                <div id="expressionDisplay" class="text-2xl md:text-3xl font-mono text-gray-800 dark:text-white mb-4 min-h-12 flex items-center justify-center">
+                    Selecciona un ejercicio para comenzar
+                </div>
+                <div id="stepDescription" class="text-lg text-gray-600 dark:text-gray-300 mb-4 min-h-8">
+                    
+                </div>
+                <div id="calculation" class="text-md text-gray-500 dark:text-gray-400 font-mono min-h-6">
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultado final -->
+        <div id="finalResult" class="bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-700 rounded-lg p-4 text-center hidden">
+            <h3 class="text-xl font-bold text-green-800 dark:text-green-200 mb-2">🎉 ¡Resultado Final!</h3>
+            <div id="finalAnswer" class="text-2xl font-mono text-green-700 dark:text-green-300"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentExercise = null;
+        let currentStep = 0;
+        let steps = [];
+
+        const exercises = {
+            1: {
+                original: "(−2)⁴÷4+[6−(−3)×(−2)]×3",
+                steps: [
+                    {
+                        expression: "(−2)⁴÷4+[6−(−3)×(−2)]×3",
+                        description: "Expresión original",
+                        highlight: "",
+                        calculation: ""
+                    },
+                    {
+                        expression: '(−2)⁴÷4+<span class="bg-red-400 px-1 rounded">[6−(−3)×(−2)]</span>×3',
+                        description: "PRIMERO resolvemos lo que está dentro de los CORCHETES",
+                        highlight: "parentheses",
+                        calculation: "Dentro de los corchetes tenemos: 6−(−3)×(−2)"
+                    },
+                    {
+                        expression: '(−2)⁴÷4+[6−<span class="bg-blue-400 px-1 rounded">(−3)×(−2)</span>]×3',
+                        description: "Dentro de los corchetes, resolvemos la multiplicación primero",
+                        highlight: "multiplication",
+                        calculation: "(−3) × (−2) = 6"
+                    },
+                    {
+                        expression: '(−2)⁴÷4+[<span class="bg-purple-300 px-1 rounded">6−6</span>]×3',
+                        description: "Dentro de los corchetes, resolvemos la resta",
+                        highlight: "subtraction",
+                        calculation: "6 − 6 = 0"
+                    },
+                    {
+                        expression: '<span class="bg-teal-400 px-1 rounded">(−2)⁴</span>÷4+[0]×3',
+                        description: "Ahora resolvemos los exponentes fuera de los corchetes",
+                        highlight: "exponents",
+                        calculation: "(−2)⁴ = (−2) × (−2) × (−2) × (−2) = 16"
+                    },
+                    {
+                        expression: '<span class="bg-green-400 px-1 rounded">16÷4</span>+0×3',
+                        description: "Resolvemos la división",
+                        highlight: "division",
+                        calculation: "16 ÷ 4 = 4"
+                    },
+                    {
+                        expression: '4+<span class="bg-blue-400 px-1 rounded">0×3</span>',
+                        description: "Resolvemos la multiplicación",
+                        highlight: "multiplication",
+                        calculation: "0 × 3 = 0"
+                    },
+                    {
+                        expression: '<span class="bg-yellow-400 px-1 rounded">4+0</span>',
+                        description: "Finalmente, resolvemos la suma",
+                        highlight: "addition",
+                        calculation: "4 + 0 = 4"
+                    },
+                    {
+                        expression: "4",
+                        description: "¡Resultado final!",
+                        highlight: "",
+                        calculation: ""
+                    }
+                ]
+            },
+            2: {
+                original: "[(−6)+4×(−3)]÷(−2)+(−3)³",
+                steps: [
+                    {
+                        expression: "[(−6)+4×(−3)]÷(−2)+(−3)³",
+                        description: "Expresión original",
+                        highlight: "",
+                        calculation: ""
+                    },
+                    {
+                        expression: '<span class="bg-red-400 px-1 rounded">[(−6)+4×(−3)]</span>÷(−2)+(−3)³',
+                        description: "PRIMERO resolvemos lo que está dentro de los CORCHETES",
+                        highlight: "parentheses",
+                        calculation: "Dentro de los corchetes tenemos: (−6)+4×(−3)"
+                    },
+                    {
+                        expression: '[(−6)+<span class="bg-blue-400 px-1 rounded">4×(−3)</span>]÷(−2)+(−3)³',
+                        description: "Dentro de los corchetes, resolvemos la multiplicación primero",
+                        highlight: "multiplication",
+                        calculation: "4 × (−3) = −12"
+                    },
+                    {
+                        expression: '[<span class="bg-yellow-400 px-1 rounded">(−6)+(−12)</span>]÷(−2)+(−3)³',
+                        description: "Dentro de los corchetes, resolvemos la suma",
+                        highlight: "addition",
+                        calculation: "(−6) + (−12) = −18"
+                    },
+                    {
+                        expression: '(−18)÷(−2)+<span class="bg-teal-400 px-1 rounded">(−3)³</span>',
+                        description: "Ahora resolvemos los exponentes fuera de los corchetes",
+                        highlight: "exponents",
+                        calculation: "(−3)³ = (−3) × (−3) × (−3) = −27"
+                    },
+                    {
+                        expression: '<span class="bg-green-400 px-1 rounded">(−18)÷(−2)</span>+(−27)',
+                        description: "Resolvemos la división",
+                        highlight: "division",
+                        calculation: "(−18) ÷ (−2) = 9"
+                    },
+                    {
+                        expression: '<span class="bg-yellow-400 px-1 rounded">9+(−27)</span>',
+                        description: "Finalmente, resolvemos la suma",
+                        highlight: "addition",
+                        calculation: "9 + (−27) = −18"
+                    },
+                    {
+                        expression: "−18",
+                        description: "¡Resultado final!",
+                        highlight: "",
+                        calculation: ""
+                    }
+                ]
+            },
+            3: {
+                original: "(−5)²−[(−4)³÷8−(−2)²]×3",
+                steps: [
+                    {
+                        expression: "(−5)²−[(−4)³÷8−(−2)²]×3",
+                        description: "Expresión original",
+                        highlight: "",
+                        calculation: ""
+                    },
+                    {
+                        expression: '(−5)²−<span class="bg-red-400 px-1 rounded">[(−4)³÷8−(−2)²]</span>×3',
+                        description: "PRIMERO resolvemos lo que está dentro de los CORCHETES",
+                        highlight: "parentheses",
+                        calculation: "Dentro de los corchetes tenemos: (−4)³÷8−(−2)²"
+                    },
+                    {
+                        expression: '(−5)²−[<span class="bg-teal-400 px-1 rounded">(−4)³</span>÷8−(−2)²]×3',
+                        description: "Dentro de los corchetes, resolvemos los exponentes primero",
+                        highlight: "exponents",
+                        calculation: "(−4)³ = (−4) × (−4) × (−4) = −64"
+                    },
+                    {
+                        expression: '(−5)²−[−64÷8−<span class="bg-teal-400 px-1 rounded">(−2)²</span>]×3',
+                        description: "Dentro de los corchetes, resolvemos el segundo exponente",
+                        highlight: "exponents",
+                        calculation: "(−2)² = (−2) × (−2) = 4"
+                    },
+                    {
+                        expression: '(−5)²−[<span class="bg-green-400 px-1 rounded">−64÷8</span>−4]×3',
+                        description: "Dentro de los corchetes, resolvemos la división",
+                        highlight: "division",
+                        calculation: "−64 ÷ 8 = −8"
+                    },
+                    {
+                        expression: '(−5)²−[<span class="bg-purple-300 px-1 rounded">−8−4</span>]×3',
+                        description: "Dentro de los corchetes, resolvemos la resta",
+                        highlight: "subtraction",
+                        calculation: "−8 − 4 = −12"
+                    },
+                    {
+                        expression: '<span class="bg-teal-400 px-1 rounded">(−5)²</span>−(−12)×3',
+                        description: "Ahora resolvemos los exponentes fuera de los corchetes",
+                        highlight: "exponents",
+                        calculation: "(−5)² = (−5) × (−5) = 25"
+                    },
+                    {
+                        expression: '25−<span class="bg-blue-400 px-1 rounded">(−12)×3</span>',
+                        description: "Resolvemos la multiplicación",
+                        highlight: "multiplication",
+                        calculation: "(−12) × 3 = −36"
+                    },
+                    {
+                        expression: '<span class="bg-purple-300 px-1 rounded">25−(−36)</span>',
+                        description: "Finalmente, resolvemos la resta (que se convierte en suma)",
+                        highlight: "subtraction",
+                        calculation: "25 − (−36) = 25 + 36 = 61"
+                    },
+                    {
+                        expression: "61",
+                        description: "¡Resultado final!",
+                        highlight: "",
+                        calculation: ""
+                    }
+                ]
+            }
+        };
+
+        function loadExercise(exerciseNum) {
+            currentExercise = exerciseNum;
+            steps = exercises[exerciseNum].steps;
+            currentStep = 0;
+            
+            // Actualizar botones de ejercicio
+            document.querySelectorAll('.exercise-btn').forEach((btn, index) => {
+                if (index + 1 === exerciseNum) {
+                    btn.className = 'exercise-btn bg-primary text-white px-4 py-3 rounded-lg hover:bg-purple-600 transition-colors font-mono text-sm';
+                } else {
+                    btn.className = 'exercise-btn bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors font-mono text-sm';
+                }
+            });
+            
+            document.getElementById('finalResult').classList.add('hidden');
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            if (!currentExercise) return;
+            
+            const step = steps[currentStep];
+            document.getElementById('stepNumber').textContent = currentStep + 1;
+            document.getElementById('totalSteps').textContent = steps.length;
+            document.getElementById('expressionDisplay').innerHTML = step.expression;
+            document.getElementById('stepDescription').textContent = step.description;
+            document.getElementById('calculation').textContent = step.calculation;
+            
+            // Actualizar botones
+            document.getElementById('prevBtn').disabled = currentStep === 0;
+            document.getElementById('nextBtn').disabled = currentStep === steps.length - 1;
+            
+            // Mostrar resultado final si es el último paso
+            if (currentStep === steps.length - 1) {
+                document.getElementById('finalResult').classList.remove('hidden');
+                document.getElementById('finalAnswer').textContent = step.expression;
+            } else {
+                document.getElementById('finalResult').classList.add('hidden');
+            }
+        }
+
+        function nextStep() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateDisplay();
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateDisplay();
+            }
+        }
+
+        function resetAnimation() {
+            currentStep = 0;
+            updateDisplay();
+        }
+
+        // Cargar el primer ejercicio por defecto
+        loadExercise(1);
+    </script>
+</body>
+</html>

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jerarquía de Operaciones - Simulación Interactiva</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        parentheses: '#3B82F6',
+                        exponents: '#8B5CF6',
+                        multiplication: '#10B981',
+                        division: '#F59E0B',
+                        addition: '#EC4899',
+                        subtraction: '#EF4444'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .step-highlight {
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 20px rgba(93, 92, 222, 0.5);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .math-expression {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .operation-card {
+            transition: all 0.3s ease;
+        }
+        
+        .operation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .dark .operation-card {
+            background: #2D2D2D;
+        }
+        
+        .dark .math-expression {
+            color: #E5E7EB;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-6xl font-bold text-gray-800 dark:text-white mb-4">
+                🧮 Jerarquía de Operaciones
+            </h1>
+            <p class="text-lg text-gray-600 dark:text-gray-300">
+                Aprende el orden correcto para resolver expresiones matemáticas
+            </p>
+        </div>
+
+        <!-- Hierarchy Rules -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-8">
+            <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">
+                📋 Orden de Operaciones
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div class="operation-card bg-blue-100 dark:bg-blue-900 p-4 rounded-xl text-center cursor-pointer hover:shadow-lg" data-operation="parentheses">
+                    <div class="text-3xl mb-2">( )</div>
+                    <div class="font-semibold text-parentheses">Paréntesis</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Primero</div>
+                </div>
+                <div class="operation-card bg-purple-100 dark:bg-purple-900 p-4 rounded-xl text-center cursor-pointer hover:shadow-lg" data-operation="exponents">
+                    <div class="text-3xl mb-2">x²</div>
+                    <div class="font-semibold text-exponents">Potencias</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Segundo</div>
+                </div>
+                <div class="operation-card bg-green-100 dark:bg-green-900 p-4 rounded-xl text-center cursor-pointer hover:shadow-lg" data-operation="multiplication">
+                    <div class="text-3xl mb-2">×</div>
+                    <div class="font-semibold text-multiplication">Multiplicación</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Tercero</div>
+                </div>
+                <div class="operation-card bg-orange-100 dark:bg-orange-900 p-4 rounded-xl text-center cursor-pointer hover:shadow-lg" data-operation="division">
+                    <div class="text-3xl mb-2">÷</div>
+                    <div class="font-semibold text-division">División</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Tercero</div>
+                </div>
+                <div class="operation-card bg-pink-100 dark:bg-pink-900 p-4 rounded-xl text-center cursor-pointer hover:shadow-lg" data-operation="addition">
+                    <div class="text-3xl mb-2">+</div>
+                    <div class="font-semibold text-addition">Suma</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Cuarto</div>
+                </div>
+                <div class="operation-card bg-red-100 dark:bg-red-900 p-4 rounded-xl text-center cursor-pointer hover:shadow-lg" data-operation="subtraction">
+                    <div class="text-3xl mb-2">-</div>
+                    <div class="font-semibold text-subtraction">Resta</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">Cuarto</div>
+                </div>
+            </div>
+            
+            <!-- Explanation Box -->
+            <div id="operation-explanation" class="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 p-6 rounded-xl hidden">
+                <div class="flex items-start space-x-4">
+                    <div id="explanation-icon" class="text-4xl"></div>
+                    <div class="flex-1">
+                        <h3 id="explanation-title" class="text-xl font-bold text-gray-800 dark:text-white mb-2"></h3>
+                        <p id="explanation-text" class="text-gray-700 dark:text-gray-300 mb-3"></p>
+                        <div id="explanation-example" class="bg-white dark:bg-gray-800 p-3 rounded-lg font-mono text-lg text-center"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Example -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-8">
+            <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">
+                🎯 Ejemplo Interactivo
+            </h2>
+            
+            <!-- Expression Display -->
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 mb-6">
+                <div class="text-center">
+                    <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">Expresión Original:</div>
+                    <div id="original-expression" class="math-expression text-2xl md:text-3xl text-gray-800 dark:text-white mb-4">
+                        3 + 2 × (4 + 1)² - 8 ÷ 2
+                    </div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">Paso actual:</div>
+                    <div id="current-expression" class="math-expression text-xl md:text-2xl text-primary mb-4">
+                        3 + 2 × (4 + 1)² - 8 ÷ 2
+                    </div>
+                    <div id="step-explanation" class="text-lg text-gray-700 dark:text-gray-300 mb-4">
+                        Haz clic en "Siguiente Paso" para comenzar la resolución
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="text-center space-y-4">
+                <div class="space-x-4">
+                    <button id="next-step" class="bg-primary hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-all transform hover:scale-105">
+                        Siguiente Paso →
+                    </button>
+                    <button id="reset" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all">
+                        🔄 Reiniciar
+                    </button>
+                </div>
+                <div class="space-x-4">
+                    <button id="example1" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium text-sm">
+                        Ejemplo 1
+                    </button>
+                    <button id="example2" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm">
+                        Ejemplo 2
+                    </button>
+                    <button id="example3" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-medium text-sm">
+                        Ejemplo 3
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Practice Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
+            <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">
+                ✏️ ¡Practica y Escribe tu Respuesta!
+            </h2>
+            
+            <div id="practice-container" class="text-center">
+                <div class="mb-6">
+                    <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">Resuelve esta expresión:</div>
+                    <div id="practice-expression" class="math-expression text-2xl md:text-3xl text-gray-800 dark:text-white mb-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        6 + 3 × 2 - 1
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="answer-input" class="block text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                        Escribe tu respuesta:
+                    </label>
+                    <input 
+                        type="number" 
+                        id="answer-input" 
+                        class="w-32 px-4 py-3 text-xl font-bold text-center border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-primary focus:outline-none dark:bg-gray-700 dark:text-white"
+                        placeholder="?"
+                    >
+                </div>
+                
+                <div class="mb-6">
+                    <button id="check-answer" class="bg-primary hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-all transform hover:scale-105 text-lg">
+                        Verificar Respuesta ✓
+                    </button>
+                </div>
+                
+                <div id="practice-feedback" class="text-xl font-bold mb-4"></div>
+                
+                <div class="space-x-4">
+                    <button id="show-solution" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg font-semibold hidden">
+                        Ver Solución 👁️
+                    </button>
+                    <button id="next-practice" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold">
+                        Nuevo Ejercicio 🔄
+                    </button>
+                </div>
+                
+                <!-- Solution Steps (hidden by default) -->
+                <div id="solution-steps" class="mt-6 bg-blue-50 dark:bg-blue-900 p-4 rounded-lg hidden">
+                    <h3 class="text-lg font-bold text-blue-800 dark:text-blue-200 mb-3">📝 Solución paso a paso:</h3>
+                    <div id="solution-content" class="text-left space-y-2 text-blue-700 dark:text-blue-300">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ejercicios para el Cuaderno -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mt-8">
+            <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">
+                📝 Ejercicios para Resolver en tu Cuaderno
+            </h2>
+            <p class="text-center text-gray-600 dark:text-gray-400 mb-8">
+                Resuelve estos ejercicios paso a paso en tu cuaderno. ¡Recuerda aplicar la jerarquía de operaciones!
+            </p>
+
+            <!-- Dificultad Media -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-center text-gray-700 dark:text-gray-300 mb-6 bg-yellow-100 dark:bg-yellow-900 py-2 rounded-lg">
+                    🟡 Dificultad Media
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border-l-4 border-yellow-400">
+                        <div class="font-bold text-gray-700 dark:text-gray-300 mb-2">Ejercicio 1:</div>
+                        <div class="math-expression text-lg text-gray-800 dark:text-white">8 + 3 × (5 - 2)² - 4</div>
+                    </div>
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border-l-4 border-yellow-400">
+                        <div class="font-bold text-gray-700 dark:text-gray-300 mb-2">Ejercicio 2:</div>
+                        <div class="math-expression text-lg text-gray-800 dark:text-white">15 ÷ 3 + 2 × 4 - 6</div>
+                    </div>
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border-l-4 border-yellow-400">
+                        <div class="font-bold text-gray-700 dark:text-gray-300 mb-2">Ejercicio 3:</div>
+                        <div class="math-expression text-lg text-gray-800 dark:text-white">(7 + 3) × 2 - 3²</div>
+                    </div>
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border-l-4 border-yellow-400">
+                        <div class="font-bold text-gray-700 dark:text-gray-300 mb-2">Ejercicio 4:</div>
+                        <div class="math-expression text-lg text-gray-800 dark:text-white">24 ÷ (2 × 3) + 5²</div>
+                    </div>
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border-l-4 border-yellow-400">
+                        <div class="font-bold text-gray-700 dark:text-gray-300 mb-2">Ejercicio 5:</div>
+                        <div class="math-expression text-lg text-gray-800 dark:text-white">6 × 2 + 18 ÷ (4 - 1)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dificultad Avanzada -->
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-center text-gray-700 dark:text-gray-300 mb-6 bg-red-100 dark:bg-red-900 py-2 rounded-lg">
+                    🔴 Dificultad Avanzada
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border-l-4 border-red-400">
+                        <div class="font-bold text-gray-700 dark:text-gray-300 mb-2">Ejercicio 6:</div>
+                        <div class="math-expression text-lg text-gray-800 dark:text-white">2 × (3 + 4)² - 5 × (8 - 6)</div>
+                    </div>
+                    <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border-l-4 border-red-400">
+                        <div class="font-bold text-gray-700 dark:text-gray-300 mb-2">Ejercicio 7:</div>
+                        <div class="math-expression text-lg text-gray-800 dark:text-white">36 ÷ (2² + 2) × 3 - 1²</div>
+                    </div>
+                    <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border-l-4 border-red-400">
+                        <div class="font-bold text-gray-700 dark:text-gray-300 mb-2">Ejercicio 8:</div>
+                        <div class="math-expression text-lg text-gray-800 dark:text-white">(5 + 3²) × 2 - 4 × (6 - 2²)</div>
+                    </div>
+                    <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border-l-4 border-red-400">
+                        <div class="font-bold text-gray-700 dark:text-gray-300 mb-2">Ejercicio 9:</div>
+                        <div class="math-expression text-lg text-gray-800 dark:text-white">48 ÷ (3² - 1) + 2 × (5 - 3)³</div>
+                    </div>
+                    <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border-l-4 border-red-400">
+                        <div class="font-bold text-gray-700 dark:text-gray-300 mb-2">Ejercicio 10:</div>
+                        <div class="math-expression text-lg text-gray-800 dark:text-white">7 × (2 + 3²) - 6² ÷ (4 × 3 - 3)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instrucciones para los estudiantes -->
+            <div class="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-lg border border-blue-200 dark:border-blue-700">
+                <h4 class="text-lg font-bold text-blue-800 dark:text-blue-200 mb-3">📋 Instrucciones:</h4>
+                <ul class="text-blue-700 dark:text-blue-300 space-y-2">
+                    <li>✅ Resuelve cada ejercicio paso a paso en tu cuaderno</li>
+                    <li>✅ Muestra claramente cada paso siguiendo la jerarquía de operaciones</li>
+                    <li>✅ Verifica tus respuestas con un compañero o con tu profesor</li>
+                    <li>✅ Si tienes dudas, revisa los ejemplos interactivos de arriba</li>
+                    <li>✅ Recuerda: Paréntesis → Potencias → Multiplicación/División → Suma/Resta</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Examples data
+        const examples = {
+            1: {
+                original: "3 + 2 × (4 + 1)² - 8 ÷ 2",
+                steps: [
+                    { 
+                        expression: "3 + 2 × <span class='text-parentheses bg-blue-200 dark:bg-blue-800 px-1 rounded'>(4 + 1)</span>² - 8 ÷ 2", 
+                        explanation: "Primero resolvemos los PARÉNTESIS: (4 + 1) = 5",
+                        highlight: "parentheses"
+                    },
+                    { 
+                        expression: "3 + 2 × <span class='text-exponents bg-purple-200 dark:bg-purple-800 px-1 rounded'>5²</span> - 8 ÷ 2", 
+                        explanation: "Ahora las POTENCIAS: 5² = 25",
+                        highlight: "exponents"
+                    },
+                    { 
+                        expression: "3 + <span class='text-multiplication bg-green-200 dark:bg-green-800 px-1 rounded'>2 × 25</span> - 8 ÷ 2", 
+                        explanation: "Multiplicación de izquierda a derecha: 2 × 25 = 50",
+                        highlight: "multiplication"
+                    },
+                    { 
+                        expression: "3 + 50 - <span class='text-division bg-orange-200 dark:bg-orange-800 px-1 rounded'>8 ÷ 2</span>", 
+                        explanation: "División: 8 ÷ 2 = 4",
+                        highlight: "division"
+                    },
+                    { 
+                        expression: "<span class='text-addition bg-pink-200 dark:bg-pink-800 px-1 rounded'>3 + 50</span> - 4", 
+                        explanation: "Suma de izquierda a derecha: 3 + 50 = 53",
+                        highlight: "addition"
+                    },
+                    { 
+                        expression: "<span class='text-subtraction bg-red-200 dark:bg-red-800 px-1 rounded'>53 - 4</span>", 
+                        explanation: "Finalmente la resta: 53 - 4 = 49",
+                        highlight: "subtraction"
+                    },
+                    { 
+                        expression: "<span class='text-4xl text-primary font-bold'>49</span>", 
+                        explanation: "¡Resultado final! 🎉",
+                        highlight: "result"
+                    }
+                ]
+            },
+            2: {
+                original: "2 × 3² + (5 - 2) × 4",
+                steps: [
+                    { 
+                        expression: "2 × 3² + <span class='text-parentheses bg-blue-200 dark:bg-blue-800 px-1 rounded'>(5 - 2)</span> × 4", 
+                        explanation: "Primero los PARÉNTESIS: (5 - 2) = 3",
+                        highlight: "parentheses"
+                    },
+                    { 
+                        expression: "2 × <span class='text-exponents bg-purple-200 dark:bg-purple-800 px-1 rounded'>3²</span> + 3 × 4", 
+                        explanation: "Ahora las POTENCIAS: 3² = 9",
+                        highlight: "exponents"
+                    },
+                    { 
+                        expression: "<span class='text-multiplication bg-green-200 dark:bg-green-800 px-1 rounded'>2 × 9</span> + 3 × 4", 
+                        explanation: "Primera multiplicación: 2 × 9 = 18",
+                        highlight: "multiplication"
+                    },
+                    { 
+                        expression: "18 + <span class='text-multiplication bg-green-200 dark:bg-green-800 px-1 rounded'>3 × 4</span>", 
+                        explanation: "Segunda multiplicación: 3 × 4 = 12",
+                        highlight: "multiplication"
+                    },
+                    { 
+                        expression: "<span class='text-addition bg-pink-200 dark:bg-pink-800 px-1 rounded'>18 + 12</span>", 
+                        explanation: "Finalmente la suma: 18 + 12 = 30",
+                        highlight: "addition"
+                    },
+                    { 
+                        expression: "<span class='text-4xl text-primary font-bold'>30</span>", 
+                        explanation: "¡Resultado final! 🎉",
+                        highlight: "result"
+                    }
+                ]
+            },
+            3: {
+                original: "15 ÷ 3 + 2 × (7 - 5)²",
+                steps: [
+                    { 
+                        expression: "15 ÷ 3 + 2 × <span class='text-parentheses bg-blue-200 dark:bg-blue-800 px-1 rounded'>(7 - 5)</span>²", 
+                        explanation: "Primero los PARÉNTESIS: (7 - 5) = 2",
+                        highlight: "parentheses"
+                    },
+                    { 
+                        expression: "15 ÷ 3 + 2 × <span class='text-exponents bg-purple-200 dark:bg-purple-800 px-1 rounded'>2²</span>", 
+                        explanation: "Ahora las POTENCIAS: 2² = 4",
+                        highlight: "exponents"
+                    },
+                    { 
+                        expression: "<span class='text-division bg-orange-200 dark:bg-orange-800 px-1 rounded'>15 ÷ 3</span> + 2 × 4", 
+                        explanation: "División: 15 ÷ 3 = 5",
+                        highlight: "division"
+                    },
+                    { 
+                        expression: "5 + <span class='text-multiplication bg-green-200 dark:bg-green-800 px-1 rounded'>2 × 4</span>", 
+                        explanation: "Multiplicación: 2 × 4 = 8",
+                        highlight: "multiplication"
+                    },
+                    { 
+                        expression: "<span class='text-addition bg-pink-200 dark:bg-pink-800 px-1 rounded'>5 + 8</span>", 
+                        explanation: "Finalmente la suma: 5 + 8 = 13",
+                        highlight: "addition"
+                    },
+                    { 
+                        expression: "<span class='text-4xl text-primary font-bold'>13</span>", 
+                        explanation: "¡Resultado final! 🎉",
+                        highlight: "result"
+                    }
+                ]
+            }
+        };
+
+        // Practice data
+        const practiceQuestions = [
+            { 
+                expression: "6 + 3 × 2 - 1", 
+                answer: 11,
+                solution: [
+                    "1. Primero multiplicación: 3 × 2 = 6",
+                    "2. Luego suma: 6 + 6 = 12", 
+                    "3. Finalmente resta: 12 - 1 = 11"
+                ]
+            },
+            { 
+                expression: "2 × (3 + 4) - 5", 
+                answer: 9,
+                solution: [
+                    "1. Primero paréntesis: (3 + 4) = 7",
+                    "2. Luego multiplicación: 2 × 7 = 14",
+                    "3. Finalmente resta: 14 - 5 = 9"
+                ]
+            },
+            { 
+                expression: "20 ÷ 4 + 3²", 
+                answer: 14,
+                solution: [
+                    "1. Primero potencia: 3² = 9",
+                    "2. Luego división: 20 ÷ 4 = 5",
+                    "3. Finalmente suma: 5 + 9 = 14"
+                ]
+            },
+            { 
+                expression: "5 + 2 × 3²", 
+                answer: 23,
+                solution: [
+                    "1. Primero potencia: 3² = 9",
+                    "2. Luego multiplicación: 2 × 9 = 18",
+                    "3. Finalmente suma: 5 + 18 = 23"
+                ]
+            },
+            { 
+                expression: "(8 - 3) × 2 + 1", 
+                answer: 11,
+                solution: [
+                    "1. Primero paréntesis: (8 - 3) = 5",
+                    "2. Luego multiplicación: 5 × 2 = 10",
+                    "3. Finalmente suma: 10 + 1 = 11"
+                ]
+            },
+            { 
+                expression: "4 × 2 + 3 × (5 - 2)", 
+                answer: 17,
+                solution: [
+                    "1. Primero paréntesis: (5 - 2) = 3",
+                    "2. Multiplicación izquierda: 4 × 2 = 8",
+                    "3. Multiplicación derecha: 3 × 3 = 9",
+                    "4. Finalmente suma: 8 + 9 = 17"
+                ]
+            },
+            { 
+                expression: "10 - 2² + 6 ÷ 3", 
+                answer: 8,
+                solution: [
+                    "1. Primero potencia: 2² = 4",
+                    "2. Luego división: 6 ÷ 3 = 2",
+                    "3. Resta: 10 - 4 = 6",
+                    "4. Finalmente suma: 6 + 2 = 8"
+                ]
+            },
+            { 
+                expression: "3 × (4 + 2) - 2³", 
+                answer: 10,
+                solution: [
+                    "1. Primero paréntesis: (4 + 2) = 6",
+                    "2. Potencia: 2³ = 8",
+                    "3. Multiplicación: 3 × 6 = 18",
+                    "4. Finalmente resta: 18 - 8 = 10"
+                ]
+            }
+        ];
+
+        let currentExample = 1;
+        let currentStep = 0;
+        let currentPractice = 0;
+
+        // DOM elements
+        const originalExpression = document.getElementById('original-expression');
+        const currentExpressionEl = document.getElementById('current-expression');
+        const stepExplanation = document.getElementById('step-explanation');
+        const nextStepBtn = document.getElementById('next-step');
+        const resetBtn = document.getElementById('reset');
+
+        // Initialize
+        function initExample(exampleNum) {
+            currentExample = exampleNum;
+            currentStep = 0;
+            const example = examples[exampleNum];
+            originalExpression.innerHTML = example.original;
+            currentExpressionEl.innerHTML = example.original;
+            stepExplanation.textContent = "Haz clic en 'Siguiente Paso' para comenzar la resolución";
+            nextStepBtn.textContent = "Siguiente Paso →";
+        }
+
+        // Next step function
+        function nextStep() {
+            const example = examples[currentExample];
+            if (currentStep < example.steps.length) {
+                const step = example.steps[currentStep];
+                currentExpressionEl.innerHTML = step.expression;
+                currentExpressionEl.classList.add('fade-in');
+                stepExplanation.textContent = step.explanation;
+                currentStep++;
+                
+                if (currentStep >= example.steps.length) {
+                    nextStepBtn.textContent = "¡Completado! 🎉";
+                    nextStepBtn.disabled = true;
+                    nextStepBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    nextStepBtn.classList.remove('bg-primary', 'hover:bg-blue-600');
+                }
+                
+                setTimeout(() => {
+                    currentExpressionEl.classList.remove('fade-in');
+                }, 500);
+            }
+        }
+
+        // Reset function
+        function reset() {
+            initExample(currentExample);
+            nextStepBtn.disabled = false;
+            nextStepBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            nextStepBtn.classList.add('bg-primary', 'hover:bg-blue-600');
+        }
+
+        // Practice functions
+        function initPractice() {
+            const question = practiceQuestions[currentPractice];
+            document.getElementById('practice-expression').textContent = question.expression;
+            document.getElementById('answer-input').value = '';
+            document.getElementById('practice-feedback').textContent = '';
+            document.getElementById('practice-feedback').className = '';
+            document.getElementById('show-solution').classList.add('hidden');
+            document.getElementById('solution-steps').classList.add('hidden');
+            document.getElementById('check-answer').disabled = false;
+            document.getElementById('check-answer').textContent = 'Verificar Respuesta ✓';
+        }
+
+        function checkPracticeAnswer() {
+            const question = practiceQuestions[currentPractice];
+            const userAnswer = parseInt(document.getElementById('answer-input').value);
+            const feedback = document.getElementById('practice-feedback');
+            const showSolutionBtn = document.getElementById('show-solution');
+            const checkBtn = document.getElementById('check-answer');
+            
+            if (isNaN(userAnswer)) {
+                feedback.innerHTML = "⚠️ Por favor ingresa un número válido";
+                feedback.className = "text-xl font-bold mb-4 text-orange-500";
+                return;
+            }
+            
+            checkBtn.disabled = true;
+            checkBtn.textContent = 'Verificado ✓';
+            
+            if (userAnswer === question.answer) {
+                feedback.innerHTML = "🎉 ¡Excelente! ¡Respuesta correcta!";
+                feedback.className = "text-xl font-bold mb-4 text-green-500";
+                showSolutionBtn.textContent = 'Ver Solución 👁️';
+            } else {
+                feedback.innerHTML = `❌ Incorrecto. La respuesta correcta es ${question.answer}`;
+                feedback.className = "text-xl font-bold mb-4 text-red-500";
+                showSolutionBtn.textContent = '¿Cómo se resuelve? 🤔';
+            }
+            
+            showSolutionBtn.classList.remove('hidden');
+        }
+
+        function showSolution() {
+            const question = practiceQuestions[currentPractice];
+            const solutionSteps = document.getElementById('solution-steps');
+            const solutionContent = document.getElementById('solution-content');
+            
+            solutionContent.innerHTML = '';
+            question.solution.forEach(step => {
+                const stepElement = document.createElement('div');
+                stepElement.textContent = step;
+                stepElement.className = 'p-2 bg-white dark:bg-gray-800 rounded mb-2';
+                solutionContent.appendChild(stepElement);
+            });
+            
+            solutionSteps.classList.remove('hidden');
+        }
+
+        function nextPracticeQuestion() {
+            currentPractice = (currentPractice + 1) % practiceQuestions.length;
+            initPractice();
+        }
+
+        // Operation explanations
+        const operationExplanations = {
+            parentheses: {
+                icon: "( )",
+                title: "Paréntesis - Primero Siempre",
+                text: "Los paréntesis tienen la mayor prioridad. Siempre resuelve primero todo lo que esté dentro de paréntesis, corchetes o llaves.",
+                example: "(3 + 5) × 2 = 8 × 2 = 16"
+            },
+            exponents: {
+                icon: "x²",
+                title: "Potencias y Exponentes",
+                text: "Después de los paréntesis, resuelve todas las potencias, raíces y exponentes de izquierda a derecha.",
+                example: "2 × 3² + 1 = 2 × 9 + 1 = 19"
+            },
+            multiplication: {
+                icon: "×",
+                title: "Multiplicación",
+                text: "La multiplicación y división tienen la misma prioridad. Se resuelven de izquierda a derecha en el orden que aparecen.",
+                example: "4 × 3 + 2 = 12 + 2 = 14"
+            },
+            division: {
+                icon: "÷",
+                title: "División",
+                text: "La división tiene la misma prioridad que la multiplicación. Se resuelven de izquierda a derecha en el orden que aparecen.",
+                example: "10 ÷ 2 + 3 = 5 + 3 = 8"
+            },
+            addition: {
+                icon: "+",
+                title: "Suma",
+                text: "La suma y resta tienen la menor prioridad. Se resuelven de izquierda a derecha después de las operaciones anteriores.",
+                example: "2 × 3 + 4 = 6 + 4 = 10"
+            },
+            subtraction: {
+                icon: "-",
+                title: "Resta",
+                text: "La resta tiene la misma prioridad que la suma. Se resuelven de izquierda a derecha después de las operaciones de mayor prioridad.",
+                example: "10 - 2 × 3 = 10 - 6 = 4"
+            }
+        };
+
+        function showOperationExplanation(operation) {
+            const explanation = operationExplanations[operation];
+            const explanationBox = document.getElementById('operation-explanation');
+            const icon = document.getElementById('explanation-icon');
+            const title = document.getElementById('explanation-title');
+            const text = document.getElementById('explanation-text');
+            const example = document.getElementById('explanation-example');
+
+            icon.textContent = explanation.icon;
+            title.textContent = explanation.title;
+            text.textContent = explanation.text;
+            example.textContent = explanation.example;
+
+            explanationBox.classList.remove('hidden');
+            explanationBox.classList.add('fade-in');
+
+            setTimeout(() => {
+                explanationBox.classList.remove('fade-in');
+            }, 500);
+        }
+
+        // Event listeners
+        nextStepBtn.addEventListener('click', nextStep);
+        resetBtn.addEventListener('click', reset);
+
+        document.getElementById('example1').addEventListener('click', () => initExample(1));
+        document.getElementById('example2').addEventListener('click', () => initExample(2));
+        document.getElementById('example3').addEventListener('click', () => initExample(3));
+
+        // Practice event listeners
+        document.getElementById('check-answer').addEventListener('click', checkPracticeAnswer);
+        document.getElementById('show-solution').addEventListener('click', showSolution);
+        document.getElementById('next-practice').addEventListener('click', nextPracticeQuestion);
+
+        // Allow Enter key to check answer
+        document.getElementById('answer-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkPracticeAnswer();
+            }
+        });
+
+        // Operation cards event listeners
+        document.querySelectorAll('[data-operation]').forEach(card => {
+            card.addEventListener('click', () => {
+                const operation = card.getAttribute('data-operation');
+                showOperationExplanation(operation);
+            });
+        });
+
+        // Initialize
+        initExample(1);
+        initPractice();
+    </script>
+</body>
+</html>

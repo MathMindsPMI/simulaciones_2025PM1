@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación: Regla de los Signos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes collision {
+            0% { transform: translateX(0) scale(1); }
+            50% { transform: translateX(0) scale(1.2); }
+            100% { transform: translateX(0) scale(1); }
+        }
+        
+        @keyframes result-appear {
+            0% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes move-right {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(40px); }
+        }
+        
+        @keyframes move-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-40px); }
+        }
+        
+        @keyframes jump-to-position {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0); }
+        }
+        
+        @keyframes explosion {
+            0% { 
+                transform: scale(0);
+                opacity: 0;
+            }
+            20% { 
+                transform: scale(1.5);
+                opacity: 1;
+            }
+            100% { 
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes explosion-particles {
+            0% { 
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% { 
+                transform: scale(1) rotate(180deg);
+                opacity: 0.8;
+            }
+            100% { 
+                transform: scale(2) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes shock-wave {
+            0% { 
+                transform: scale(0);
+                opacity: 0.8;
+            }
+            100% { 
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes screen-flash {
+            0% { opacity: 0; }
+            50% { opacity: 0.3; }
+            100% { opacity: 0; }
+        }
+        
+        .explosion-positive {
+            background: radial-gradient(circle, #ff6b6b, #ff3838, #cc0000);
+            box-shadow: 0 0 100px rgba(255, 59, 59, 0.8);
+        }
+        
+        .explosion-negative {
+            background: radial-gradient(circle, #4fc3f7, #2196f3, #0066cc);
+            box-shadow: 0 0 100px rgba(33, 150, 243, 0.8);
+        }
+        
+        .explosion { animation: explosion 1s ease-out; }
+        .explosion-particles { animation: explosion-particles 1.2s ease-out; }
+        .shock-wave { animation: shock-wave 0.8s ease-out; }
+        .screen-flash { animation: screen-flash 0.5s ease-out; }
+        
+        .bounce { animation: bounce 2s infinite; }
+        .pulse { animation: pulse 1.5s infinite; }
+        .collision { animation: collision 0.8s ease-in-out; }
+        .result-appear { animation: result-appear 1s ease-out; }
+        
+        .force-positive {
+            background: linear-gradient(135deg, #3B82F6, #1E40AF);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        
+        .force-negative {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+        
+        .result-positive {
+            background: linear-gradient(135deg, #10B981, #059669);
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
+        }
+        
+        .result-negative {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-4">
+                🔥 SIMULACIÓN: REGLA DE LOS SIGNOS 🔥
+            </h1>
+            <p class="text-xl text-gray-300">¡Descubre cómo las fuerzas positivas y negativas interactúan!</p>
+        </header>
+
+        <!-- Theory Section -->
+        <section class="mb-8 bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <h2 class="text-2xl font-bold mb-4 text-center">📚 ¿Qué es la Regla de los Signos?</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3 p-3 bg-blue-900/30 rounded-lg">
+                        <div class="w-8 h-8 force-positive rounded-full flex items-center justify-center text-white font-bold">+</div>
+                        <span>= Fuerza POSITIVA (empuja hacia adelante)</span>
+                    </div>
+                    <div class="flex items-center space-x-3 p-3 bg-red-900/30 rounded-lg">
+                        <div class="w-8 h-8 force-negative rounded-full flex items-center justify-center text-white font-bold">-</div>
+                        <span>= Fuerza NEGATIVA (empuja hacia atrás)</span>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <p class="text-lg mb-2">🤝 <strong>¿Qué pasa cuando dos fuerzas chocan?</strong></p>
+                    <p class="text-gray-300">¡Eso es exactamente lo que vamos a descubrir!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Simulation -->
+        <section class="mb-8">
+            <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <h2 class="text-2xl font-bold mb-6 text-center">🚀 Simulación Interactiva</h2>
+                
+                <!-- Controls -->
+                <div class="mb-6">
+                    <div class="grid md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Tipo de Operación:</label>
+                            <select id="operation-type" class="w-full p-3 bg-gray-700 rounded-lg text-white text-lg">
+                                <option value="*">× Multiplicación</option>
+                                <option value="+">+ Suma</option>
+                                <option value="-">- Resta</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Primera Fuerza:</label>
+                            <select id="first-sign" class="w-full p-3 bg-gray-700 rounded-lg text-white text-lg">
+                                <option value="+">+ (Positiva)</option>
+                                <option value="-">- (Negativa)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Segunda Fuerza:</label>
+                            <select id="second-sign" class="w-full p-3 bg-gray-700 rounded-lg text-white text-lg">
+                                <option value="+">+ (Positiva)</option>
+                                <option value="-">- (Negativa)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Number inputs for addition/subtraction -->
+                    <div id="number-inputs" class="grid md:grid-cols-2 gap-4 mb-4 hidden">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Primer Número:</label>
+                            <input type="number" id="first-number" min="1" max="20" value="5" class="w-full p-3 bg-gray-700 rounded-lg text-white text-lg text-center">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Segundo Número:</label>
+                            <input type="number" id="second-number" min="1" max="20" value="3" class="w-full p-3 bg-gray-700 rounded-lg text-white text-lg text-center">
+                        </div>
+                    </div>
+                    <button id="simulate-btn" class="w-full py-3 px-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg font-bold text-lg transition-all duration-300 transform hover:scale-105">
+                        ⚡ ¡SIMULAR COLISIÓN! ⚡
+                    </button>
+                </div>
+
+                <!-- Simulation Area -->
+                <div class="relative bg-gray-900 rounded-lg p-8 min-h-64 flex items-center justify-center border-2 border-gray-600">
+                    <!-- Forces Simulation (for multiplication) -->
+                    <div id="forces-simulation" class="w-full flex items-center justify-between">
+                        <!-- First Force -->
+                        <div id="force1" class="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white force-positive transition-all duration-300">
+                            +
+                        </div>
+                        
+                        <!-- Operation Symbol -->
+                        <div id="operation-symbol" class="text-4xl font-bold text-gray-500">×</div>
+                        
+                        <!-- Second Force -->
+                        <div id="force2" class="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white force-positive transition-all duration-300">
+                            +
+                        </div>
+                    </div>
+                    
+                    <!-- Number Line Simulation (for addition/subtraction) -->
+                    <div id="number-line-simulation" class="w-full hidden">
+                        <div class="text-center mb-6">
+                            <h3 class="text-xl font-bold text-yellow-400">📏 Recta Numérica Expandida</h3>
+                            <p class="text-sm text-gray-400">¡Observa cómo te mueves en la recta con números hasta 20!</p>
+                        </div>
+                        
+                        <!-- Number Line Container -->
+                        <div class="relative bg-gray-800 rounded-lg p-6 border border-gray-600">
+                            <!-- Main Number Line -->
+                            <div class="relative mb-8">
+                                <!-- Line -->
+                                <div class="w-full h-2 bg-gradient-to-r from-red-600 via-yellow-400 to-green-600 rounded-full relative shadow-lg">
+                                    <!-- Major tick marks and numbers (every 5) -->
+                                    <div class="absolute -top-12 w-full flex justify-between text-sm font-bold">
+                                        <div class="text-center">
+                                            <div class="text-red-400">-20</div>
+                                            <div class="w-0.5 h-8 bg-red-400 mx-auto mt-1"></div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-red-300">-15</div>
+                                            <div class="w-0.5 h-6 bg-red-300 mx-auto mt-1"></div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-orange-400">-10</div>
+                                            <div class="w-0.5 h-6 bg-orange-400 mx-auto mt-1"></div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-orange-300">-5</div>
+                                            <div class="w-0.5 h-6 bg-orange-300 mx-auto mt-1"></div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-yellow-400 text-lg">0</div>
+                                            <div class="w-1 h-10 bg-yellow-400 mx-auto mt-1 shadow-lg"></div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-lime-300">5</div>
+                                            <div class="w-0.5 h-6 bg-lime-300 mx-auto mt-1"></div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-green-400">10</div>
+                                            <div class="w-0.5 h-6 bg-green-400 mx-auto mt-1"></div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-green-300">15</div>
+                                            <div class="w-0.5 h-6 bg-green-300 mx-auto mt-1"></div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-green-400">20</div>
+                                            <div class="w-0.5 h-8 bg-green-400 mx-auto mt-1"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Minor tick marks (every 1) -->
+                                    <div id="minor-ticks" class="absolute -top-2 w-full flex justify-between">
+                                        <!-- These will be generated dynamically -->
+                                    </div>
+                                    
+                                    <!-- Moving pointer -->
+                                    <div id="pointer" class="absolute top-6 transform -translate-x-1/2 transition-all duration-1500 ease-in-out" style="left: 50%;">
+                                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-2xl border-4 border-white animate-pulse">
+                                            👤
+                                        </div>
+                                        <div class="w-1 h-6 bg-purple-500 mx-auto shadow-lg"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Current Position Display -->
+                            <div class="text-center mb-4">
+                                <div class="inline-block bg-gray-700 rounded-lg px-4 py-2 border">
+                                    <span class="text-gray-300">Posición actual: </span>
+                                    <span id="current-position" class="text-2xl font-bold text-yellow-400">0</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Instructions -->
+                            <div id="step-instructions" class="text-center space-y-3">
+                                <div id="step1" class="p-4 bg-blue-900/40 rounded-xl border border-blue-500">
+                                    <span class="text-blue-400 font-bold text-lg">Paso 1:</span> 
+                                    <span id="step1-text" class="text-white text-lg">Comenzamos en 0</span>
+                                </div>
+                                <div id="step2" class="p-4 bg-green-900/40 rounded-xl border border-green-500 hidden">
+                                    <span class="text-green-400 font-bold text-lg">Paso 2:</span> 
+                                    <span id="step2-text" class="text-white text-lg">Nos movemos...</span>
+                                </div>
+                                <div id="step3" class="p-4 bg-purple-900/40 rounded-xl border border-purple-500 hidden">
+                                    <span class="text-purple-400 font-bold text-lg">Resultado:</span> 
+                                    <span id="step3-text" class="text-white text-lg">¡Llegamos a...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Result -->
+                    <div id="result-area" class="absolute inset-0 flex items-center justify-center hidden">
+                        <div id="result-force" class="w-32 h-32 rounded-full flex items-center justify-center text-4xl font-bold text-white result-positive">
+                            +
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explanation -->
+                <div id="explanation" class="mt-6 p-4 bg-gray-700 rounded-lg hidden">
+                    <h3 class="text-xl font-bold mb-2">💡 Explicación:</h3>
+                    <p id="explanation-text" class="text-lg"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Rules Summary -->
+        <section class="mb-8">
+            <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <h2 class="text-2xl font-bold mb-6 text-center">📋 Reglas de Oro</h2>
+                
+                <!-- Multiplication Rules -->
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-center mb-4 text-purple-400">🔢 MULTIPLICACIÓN</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-green-900/30 rounded-lg border-2 border-green-500">
+                            <h4 class="text-lg font-bold text-green-400 mb-3">✅ Resultado POSITIVO</h4>
+                            <div class="space-y-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-blue-400 font-bold">(+)</span>
+                                    <span>×</span>
+                                    <span class="text-blue-400 font-bold">(+)</span>
+                                    <span>=</span>
+                                    <span class="text-green-400 font-bold">(+)</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-red-400 font-bold">(-)</span>
+                                    <span>×</span>
+                                    <span class="text-red-400 font-bold">(-)</span>
+                                    <span>=</span>
+                                    <span class="text-green-400 font-bold">(+)</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-300 mt-2">🤝 ¡Signos iguales = POSITIVO!</p>
+                        </div>
+                        
+                        <div class="p-4 bg-orange-900/30 rounded-lg border-2 border-orange-500">
+                            <h4 class="text-lg font-bold text-orange-400 mb-3">⚠️ Resultado NEGATIVO</h4>
+                            <div class="space-y-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-blue-400 font-bold">(+)</span>
+                                    <span>×</span>
+                                    <span class="text-red-400 font-bold">(-)</span>
+                                    <span>=</span>
+                                    <span class="text-orange-400 font-bold">(-)</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-red-400 font-bold">(-)</span>
+                                    <span>×</span>
+                                    <span class="text-blue-400 font-bold">(+)</span>
+                                    <span>=</span>
+                                    <span class="text-orange-400 font-bold">(-)</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-300 mt-2">⚔️ ¡Signos diferentes = NEGATIVO!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Addition Rules -->
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-center mb-4 text-cyan-400">➕ SUMA</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-blue-900/30 rounded-lg border-2 border-blue-500">
+                            <h4 class="text-lg font-bold text-blue-400 mb-3">📈 Signos Iguales</h4>
+                            <div class="space-y-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-blue-400 font-bold">(+)</span>
+                                    <span>+</span>
+                                    <span class="text-blue-400 font-bold">(+)</span>
+                                    <span>=</span>
+                                    <span class="text-blue-400 font-bold">(+)</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-red-400 font-bold">(-)</span>
+                                    <span>+</span>
+                                    <span class="text-red-400 font-bold">(-)</span>
+                                    <span>=</span>
+                                    <span class="text-red-400 font-bold">(-)</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-300 mt-2">🎯 ¡Se suman y conservan el signo!</p>
+                        </div>
+                        
+                        <div class="p-4 bg-yellow-900/30 rounded-lg border-2 border-yellow-500">
+                            <h4 class="text-lg font-bold text-yellow-400 mb-3">⚖️ Signos Diferentes</h4>
+                            <div class="space-y-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-blue-400 font-bold">(+)</span>
+                                    <span>+</span>
+                                    <span class="text-red-400 font-bold">(-)</span>
+                                    <span>=</span>
+                                    <span class="text-gray-400 font-bold">±</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-red-400 font-bold">(-)</span>
+                                    <span>+</span>
+                                    <span class="text-blue-400 font-bold">(+)</span>
+                                    <span>=</span>
+                                    <span class="text-gray-400 font-bold">±</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-300 mt-2">🔄 ¡Se restan! Gana el mayor!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subtraction Rules -->
+                <div>
+                    <h3 class="text-xl font-bold text-center mb-4 text-pink-400">➖ RESTA</h3>
+                    <div class="p-4 bg-gray-700 rounded-lg border-2 border-gray-500">
+                        <h4 class="text-lg font-bold text-gray-300 mb-3">🔄 Regla Especial: Restar = Sumar el Opuesto</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-blue-400 font-bold">(+)</span>
+                                <span>-</span>
+                                <span class="text-blue-400 font-bold">(+)</span>
+                                <span>=</span>
+                                <span class="text-blue-400 font-bold">(+)</span>
+                                <span>+</span>
+                                <span class="text-red-400 font-bold">(-)</span>
+                                <span>=</span>
+                                <span class="text-gray-400 font-bold">±</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-blue-400 font-bold">(+)</span>
+                                <span>-</span>
+                                <span class="text-red-400 font-bold">(-)</span>
+                                <span>=</span>
+                                <span class="text-blue-400 font-bold">(+)</span>
+                                <span>+</span>
+                                <span class="text-blue-400 font-bold">(+)</span>
+                                <span>=</span>
+                                <span class="text-blue-400 font-bold">(+)</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-red-400 font-bold">(-)</span>
+                                <span>-</span>
+                                <span class="text-blue-400 font-bold">(+)</span>
+                                <span>=</span>
+                                <span class="text-red-400 font-bold">(-)</span>
+                                <span>+</span>
+                                <span class="text-red-400 font-bold">(-)</span>
+                                <span>=</span>
+                                <span class="text-red-400 font-bold">(-)</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-red-400 font-bold">(-)</span>
+                                <span>-</span>
+                                <span class="text-red-400 font-bold">(-)</span>
+                                <span>=</span>
+                                <span class="text-red-400 font-bold">(-)</span>
+                                <span>+</span>
+                                <span class="text-blue-400 font-bold">(+)</span>
+                                <span>=</span>
+                                <span class="text-gray-400 font-bold">±</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-300 mt-2">💡 ¡Convertimos la resta en suma cambiando el signo!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Practice Section -->
+        <section class="mb-8">
+            <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <h2 class="text-2xl font-bold mb-6 text-center">🎯 ¡Practica y Demuestra lo que Sabes!</h2>
+                
+                <div id="practice-area">
+                    <div class="text-center mb-6">
+                        <div id="practice-question" class="text-3xl font-bold mb-4">
+                            <span id="num1" class="text-blue-400">+5</span>
+                            <span class="text-gray-400 mx-3">×</span>
+                            <span id="num2" class="text-red-400">-3</span>
+                            <span class="text-gray-400 mx-3">=</span>
+                            <span class="text-gray-500">?</span>
+                        </div>
+                        
+                        <div class="space-x-4">
+                            <button id="answer-positive" class="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-bold text-lg transition-all duration-300 transform hover:scale-105">
+                                ✅ POSITIVO
+                            </button>
+                            <button id="answer-negative" class="px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded-lg font-bold text-lg transition-all duration-300 transform hover:scale-105">
+                                ❌ NEGATIVO
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="practice-result" class="text-center hidden">
+                        <div id="practice-feedback" class="text-2xl font-bold mb-4"></div>
+                        <button id="next-question" class="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-bold transition-all duration-300">
+                            ➡️ Siguiente Pregunta
+                        </button>
+                    </div>
+                    
+                    <div class="mt-6 text-center">
+                        <div class="text-lg">
+                            <span class="text-green-400 font-bold">Correctas: </span>
+                            <span id="correct-count" class="text-2xl font-bold">0</span>
+                            <span class="mx-4">|</span>
+                            <span class="text-red-400 font-bold">Incorrectas: </span>
+                            <span id="incorrect-count" class="text-2xl font-bold">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Dark mode support
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Simulation logic
+        const operationTypeSelect = document.getElementById('operation-type');
+        const firstSignSelect = document.getElementById('first-sign');
+        const secondSignSelect = document.getElementById('second-sign');
+        const simulateBtn = document.getElementById('simulate-btn');
+        const operationSymbol = document.getElementById('operation-symbol');
+        const force1 = document.getElementById('force1');
+        const force2 = document.getElementById('force2');
+        const simulationArea = document.getElementById('simulation-area');
+        const resultArea = document.getElementById('result-area');
+        const resultForce = document.getElementById('result-force');
+        const explanation = document.getElementById('explanation');
+        const explanationText = document.getElementById('explanation-text');
+
+        function updateForceAppearance(element, sign) {
+            element.textContent = sign;
+            element.className = element.className.replace(/(force-positive|force-negative)/, '');
+            element.classList.add(sign === '+' ? 'force-positive' : 'force-negative');
+        }
+
+        function updateControls() {
+            updateForceAppearance(force1, firstSignSelect.value);
+            updateForceAppearance(force2, secondSignSelect.value);
+            operationSymbol.textContent = operationTypeSelect.value;
+            
+            // Show appropriate simulation type and number inputs
+            const operation = operationTypeSelect.value;
+            const forcesSimulation = document.getElementById('forces-simulation');
+            const numberLineSimulation = document.getElementById('number-line-simulation');
+            const numberInputs = document.getElementById('number-inputs');
+            
+            if (operation === '*') {
+                forcesSimulation.classList.remove('hidden');
+                numberLineSimulation.classList.add('hidden');
+                numberInputs.classList.add('hidden');
+                simulateBtn.innerHTML = '⚡ ¡SIMULAR COLISIÓN! ⚡';
+            } else {
+                forcesSimulation.classList.add('hidden');
+                numberLineSimulation.classList.remove('hidden');
+                numberInputs.classList.remove('hidden');
+                simulateBtn.innerHTML = '🚶‍♂️ ¡CAMINAR EN LA RECTA! 🚶‍♂️';
+                resetNumberLine();
+                updateNumberLineRange();
+            }
+        }
+
+        function updateNumberLineRange() {
+            // Get current numbers to adjust the range if needed
+            const num1 = parseInt(document.getElementById('first-number').value) || 3;
+            const num2 = parseInt(document.getElementById('second-number').value) || 2;
+            const maxNum = Math.max(num1, num2);
+            
+            // Adjust number line if numbers are too large
+            const numberLabels = document.querySelectorAll('#number-line-simulation .absolute.-top-8 span');
+            if (maxNum > 5) {
+                // Expand range for larger numbers
+                const range = Math.max(10, maxNum + 2);
+                const half = Math.floor(range / 2);
+                numberLabels.forEach((label, index) => {
+                    const value = index - half;
+                    if (value === 0) {
+                        label.textContent = '0';
+                        label.className = 'text-yellow-400 font-bold';
+                    } else {
+                        label.textContent = value.toString();
+                        label.className = 'text-gray-400';
+                    }
+                });
+            }
+        }
+
+        operationTypeSelect.addEventListener('change', updateControls);
+        firstSignSelect.addEventListener('change', updateControls);
+        secondSignSelect.addEventListener('change', updateControls);
+
+        function calculateResult(operation, sign1, sign2) {
+            if (operation === '*') {
+                // Multiplicación: signos iguales = positivo, signos diferentes = negativo
+                return (sign1 === sign2) ? '+' : '-';
+            } else if (operation === '+') {
+                // Suma: signos iguales conservan el signo, signos diferentes = depende de magnitudes
+                if (sign1 === sign2) {
+                    return sign1; // Conserva el signo común
+                } else {
+                    return '±'; // Resultado variable (depende de magnitudes)
+                }
+            } else if (operation === '-') {
+                // Resta: convertir a suma del opuesto
+                const oppositeSign2 = sign2 === '+' ? '-' : '+';
+                if (sign1 === oppositeSign2) {
+                    return sign1; // Signos iguales después de cambiar
+                } else {
+                    return '±'; // Resultado variable
+                }
+            }
+        }
+
+        function getExplanation(operation, sign1, sign2, result) {
+            if (operation === '*') {
+                if (sign1 === '+' && sign2 === '+') {
+                    return '🤝 MULTIPLICACIÓN: Positivo × Positivo = ¡POSITIVO! Los signos iguales siempre dan positivo.';
+                } else if (sign1 === '-' && sign2 === '-') {
+                    return '🤝 MULTIPLICACIÓN: Negativo × Negativo = ¡POSITIVO! Los signos iguales siempre dan positivo.';
+                } else {
+                    return '⚔️ MULTIPLICACIÓN: Signos diferentes = ¡NEGATIVO! Positivo × Negativo siempre es negativo.';
+                }
+            } else if (operation === '+') {
+                if (sign1 === sign2) {
+                    const signName = sign1 === '+' ? 'positivas' : 'negativas';
+                    return `🎯 SUMA: Fuerzas ${signName} se SUMAN y conservan su signo ${sign1}. ¡Van en la misma dirección!`;
+                } else {
+                    return '⚖️ SUMA: Signos diferentes se RESTAN. El resultado depende de cuál número sea mayor. ¡Es una batalla!';
+                }
+            } else if (operation === '-') {
+                const oppositeSign2 = sign2 === '+' ? '-' : '+';
+                if (sign1 === '+' && sign2 === '-') {
+                    return '🔄 RESTA: (+) - (-) = (+) + (+) = ¡POSITIVO! Restar un negativo es como sumar un positivo.';
+                } else if (sign1 === '-' && sign2 === '+') {
+                    return '🔄 RESTA: (-) - (+) = (-) + (-) = ¡NEGATIVO! Se suman dos fuerzas negativas.';
+                } else {
+                    return `🔄 RESTA: ${sign1} - ${sign2} = ${sign1} + ${oppositeSign2}. El resultado depende de las magnitudes.`;
+                }
+            }
+        }
+
+        function getExplanationWithNumbers(operation, sign1, sign2, num1, num2, result) {
+            if (operation === '*') {
+                return getExplanation(operation, sign1, sign2, result);
+            } else if (operation === '+') {
+                const val1 = (sign1 === '+' ? num1 : -num1);
+                const val2 = (sign2 === '+' ? num2 : -num2);
+                const finalResult = val1 + val2;
+                const finalSign = finalResult >= 0 ? '+' : '-';
+                const finalValue = Math.abs(finalResult);
+                
+                if (sign1 === sign2) {
+                    const signName = sign1 === '+' ? 'positivos' : 'negativos';
+                    return `🎯 SUMA: ${sign1}${num1} + ${sign2}${num2} = ${finalSign}${finalValue}. Números ${signName} se suman y conservan el signo!`;
+                } else {
+                    return `⚖️ SUMA: ${sign1}${num1} + ${sign2}${num2} = ${finalSign}${finalValue}. Se restan porque tienen signos diferentes, gana el mayor!`;
+                }
+            } else if (operation === '-') {
+                const val1 = (sign1 === '+' ? num1 : -num1);
+                const val2 = (sign2 === '+' ? num2 : -num2);
+                const finalResult = val1 - val2;
+                const finalSign = finalResult >= 0 ? '+' : '-';
+                const finalValue = Math.abs(finalResult);
+                const oppositeSign2 = sign2 === '+' ? '-' : '+';
+                
+                return `🔄 RESTA: ${sign1}${num1} - ${sign2}${num2} = ${sign1}${num1} + ${oppositeSign2}${num2} = ${finalSign}${finalValue}. ¡Restar es sumar el opuesto!`;
+            }
+        }
+
+        // Number line functions
+        function resetNumberLine() {
+            const pointer = document.getElementById('pointer');
+            pointer.style.left = '50%'; // Start at zero (center)
+            
+            // Reset steps
+            document.getElementById('step1').classList.remove('hidden');
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.add('hidden');
+            
+            document.getElementById('step1-text').textContent = 'Comenzamos en 0';
+        }
+
+        function updateCurrentPosition(position) {
+            document.getElementById('current-position').textContent = position >= 0 ? `+${position}` : position.toString();
+        }
+
+        async function animateNumberLine(operation, sign1, sign2, num1, num2) {
+            const pointer = document.getElementById('pointer');
+            
+            // New scale: range from -20 to +20, so each unit is 2.5% of the line width
+            const stepSize = 2.5; // percentage per number unit
+            let currentPosition = 50; // Start at 50% (zero)
+            
+            // Step 1: Show starting position
+            document.getElementById('step1-text').textContent = 'Comenzamos en la posición 0';
+            updateCurrentPosition(0);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Step 2: First movement
+            document.getElementById('step2').classList.remove('hidden');
+            
+            if (operation === '+') {
+                // Addition: move according to first number
+                const val1 = (sign1 === '+' ? num1 : -num1);
+                const movement1 = val1 * stepSize;
+                currentPosition += movement1;
+                pointer.style.left = `${Math.max(0, Math.min(100, currentPosition))}%`;
+                
+                document.getElementById('step2-text').textContent = 
+                    `Partimos de 0, nos movemos ${sign1}${num1} (${sign1 === '+' ? 'derecha' : 'izquierda'})`;
+                
+                updateCurrentPosition(val1);
+                await new Promise(resolve => setTimeout(resolve, 2500));
+                
+                // Then add the second number
+                const val2 = (sign2 === '+' ? num2 : -num2);
+                const movement2 = val2 * stepSize;
+                currentPosition += movement2;
+                pointer.style.left = `${Math.max(0, Math.min(100, currentPosition))}%`;
+                
+                const direction2 = sign2 === '+' ? 'derecha' : 'izquierda';
+                document.getElementById('step2-text').textContent += 
+                    `, luego ${sign2}${num2} más (${direction2})`;
+                
+                const finalVal = val1 + val2;
+                updateCurrentPosition(finalVal);
+                
+            } else if (operation === '-') {
+                // Subtraction: first move according to first number
+                const val1 = (sign1 === '+' ? num1 : -num1);
+                const movement1 = val1 * stepSize;
+                currentPosition += movement1;
+                pointer.style.left = `${Math.max(0, Math.min(100, currentPosition))}%`;
+                
+                document.getElementById('step2-text').textContent = 
+                    `Partimos de 0, vamos a la posición ${sign1}${num1}`;
+                
+                updateCurrentPosition(val1);
+                await new Promise(resolve => setTimeout(resolve, 2500));
+                
+                // Then subtract (which means move opposite direction)
+                const val2 = (sign2 === '+' ? num2 : -num2);
+                const oppositeSign2 = sign2 === '+' ? '-' : '+';
+                const movement2 = -val2 * stepSize; // subtract means opposite movement
+                currentPosition += movement2;
+                pointer.style.left = `${Math.max(0, Math.min(100, currentPosition))}%`;
+                
+                const direction2 = oppositeSign2 === '+' ? 'derecha' : 'izquierda';
+                document.getElementById('step2-text').textContent += 
+                    `, luego restamos ${sign2}${num2} = sumamos ${oppositeSign2}${num2} (${direction2})`;
+                
+                const finalVal = val1 - val2;
+                updateCurrentPosition(finalVal);
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            
+            // Step 3: Show final result
+            document.getElementById('step3').classList.remove('hidden');
+            const finalPosition = Math.round((currentPosition - 50) / stepSize);
+            const finalSign = finalPosition >= 0 ? '+' : '-';
+            const finalValue = Math.abs(finalPosition);
+            
+            document.getElementById('step3-text').textContent = 
+                `¡Posición final: ${finalSign}${finalValue}! El resultado es ${finalSign === '+' ? 'POSITIVO' : 'NEGATIVO'}`;
+            
+            return finalSign;
+        }
+
+        simulateBtn.addEventListener('click', async () => {
+            const operation = operationTypeSelect.value;
+            const sign1 = firstSignSelect.value;
+            const sign2 = secondSignSelect.value;
+            
+            // Get user input numbers for addition/subtraction, or use default for multiplication
+            let num1, num2;
+            if (operation === '*') {
+                num1 = 3; // Fixed for multiplication display
+                num2 = 2;
+            } else {
+                num1 = parseInt(document.getElementById('first-number').value) || 3;
+                num2 = parseInt(document.getElementById('second-number').value) || 2;
+            }
+            
+            const result = calculateResult(operation, sign1, sign2);
+            
+            // Hide result and explanation
+            resultArea.classList.add('hidden');
+            explanation.classList.add('hidden');
+            
+            if (operation === '*') {
+                // Use force simulation for multiplication
+                const simulationContainer = document.querySelector('.relative.bg-gray-900.rounded-lg');
+                const simulationArea = document.getElementById('forces-simulation');
+                simulationArea.classList.remove('hidden');
+                
+                // Add collision animation
+                force1.classList.add('collision');
+                force2.classList.add('collision');
+                
+                // Wait for collision animation
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                // Create explosive collision effect
+                await createExplosion(simulationContainer, result);
+                
+                // Hide forces and show result
+                simulationArea.classList.add('hidden');
+                resultArea.classList.remove('hidden');
+                
+                // Update result appearance
+                resultForce.textContent = result;
+                resultForce.className = resultForce.className.replace(/(result-positive|result-negative)/, '');
+                
+                if (result === '+') {
+                    resultForce.classList.add('result-positive');
+                } else if (result === '-') {
+                    resultForce.classList.add('result-negative');
+                }
+                
+                resultForce.classList.add('result-appear');
+                
+                // Remove animations
+                setTimeout(() => {
+                    force1.classList.remove('collision');
+                    force2.classList.remove('collision');
+                    resultForce.classList.remove('result-appear');
+                }, 1000);
+                
+            } else {
+                // Use number line simulation for addition/subtraction
+                resetNumberLine();
+                const numberLineSimulation = document.getElementById('number-line-simulation');
+                numberLineSimulation.classList.remove('hidden');
+                
+                // Animate the number line with user-specified numbers
+                await animateNumberLine(operation, sign1, sign2, num1, num2);
+            }
+            
+            // Show explanation with the actual numbers used
+            setTimeout(() => {
+                explanation.classList.remove('hidden');
+                explanationText.textContent = getExplanationWithNumbers(operation, sign1, sign2, num1, num2, result);
+            }, operation === '*' ? 500 : 6000);
+        });
+
+        // Practice section logic
+        let correctCount = 0;
+        let incorrectCount = 0;
+        let currentQuestion = {};
+
+        function generateQuestion() {
+            const signs = ['+', '-'];
+            const operations = ['*', '+', '-'];
+            const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            
+            const operation = operations[Math.floor(Math.random() * operations.length)];
+            const sign1 = signs[Math.floor(Math.random() * signs.length)];
+            const sign2 = signs[Math.floor(Math.random() * signs.length)];
+            const num1 = numbers[Math.floor(Math.random() * numbers.length)];
+            const num2 = numbers[Math.floor(Math.random() * numbers.length)];
+            
+            // Para simplificar la práctica, solo usamos casos con respuestas definitivas
+            let correctAnswer;
+            if (operation === '*') {
+                correctAnswer = (sign1 === sign2) ? '+' : '-';
+            } else if (operation === '+') {
+                if (sign1 === sign2) {
+                    correctAnswer = sign1;
+                } else {
+                    // Para casos mixtos en suma, asumimos números específicos para tener respuesta definitiva
+                    correctAnswer = num1 > num2 ? sign1 : sign2;
+                }
+            } else if (operation === '-') {
+                if (sign1 === '+' && sign2 === '-') {
+                    correctAnswer = '+'; // (+) - (-) = (+) + (+) = (+)
+                } else if (sign1 === '-' && sign2 === '+') {
+                    correctAnswer = '-'; // (-) - (+) = (-) + (-) = (-)
+                } else {
+                    // Para otros casos, depende de las magnitudes
+                    correctAnswer = num1 > num2 ? sign1 : (sign1 === sign2 ? '-' : '+');
+                }
+            }
+            
+            currentQuestion = {
+                operation,
+                sign1,
+                sign2,
+                num1,
+                num2,
+                correctAnswer
+            };
+            
+            // Actualizar la pregunta en pantalla
+            document.getElementById('num1').textContent = sign1 + num1;
+            document.querySelector('#practice-question .text-gray-400:nth-child(2)').textContent = operation;
+            document.getElementById('num2').textContent = sign2 + num2;
+            document.getElementById('num1').className = sign1 === '+' ? 'text-blue-400' : 'text-red-400';
+            document.getElementById('num2').className = sign2 === '+' ? 'text-blue-400' : 'text-red-400';
+        }
+
+        function checkAnswer(userAnswer) {
+            const isCorrect = userAnswer === currentQuestion.correctAnswer;
+            const practiceResult = document.getElementById('practice-result');
+            const practiceFeedback = document.getElementById('practice-feedback');
+            
+            if (isCorrect) {
+                correctCount++;
+                practiceFeedback.innerHTML = '🎉 ¡CORRECTO! ¡Excelente trabajo!';
+                practiceFeedback.className = 'text-2xl font-bold mb-4 text-green-400';
+            } else {
+                incorrectCount++;
+                const correctSign = currentQuestion.correctAnswer === '+' ? 'POSITIVO' : 'NEGATIVO';
+                practiceFeedback.innerHTML = `❌ Incorrecto. La respuesta correcta es: ${correctSign}`;
+                practiceFeedback.className = 'text-2xl font-bold mb-4 text-red-400';
+            }
+            
+            document.getElementById('correct-count').textContent = correctCount;
+            document.getElementById('incorrect-count').textContent = incorrectCount;
+            
+            practiceResult.classList.remove('hidden');
+            document.getElementById('answer-positive').style.display = 'none';
+            document.getElementById('answer-negative').style.display = 'none';
+        }
+
+        function nextQuestion() {
+            document.getElementById('practice-result').classList.add('hidden');
+            document.getElementById('answer-positive').style.display = 'inline-block';
+            document.getElementById('answer-negative').style.display = 'inline-block';
+            generateQuestion();
+        }
+
+        document.getElementById('answer-positive').addEventListener('click', () => checkAnswer('+'));
+        document.getElementById('answer-negative').addEventListener('click', () => checkAnswer('-'));
+        document.getElementById('next-question').addEventListener('click', nextQuestion);
+
+        // Explosion effect function
+        async function createExplosion(container, result) {
+            return new Promise((resolve) => {
+                // Create screen flash
+                const flash = document.createElement('div');
+                flash.className = 'fixed inset-0 z-50 pointer-events-none screen-flash';
+                flash.style.backgroundColor = result === '+' ? 'rgba(255, 59, 59, 0.3)' : 'rgba(33, 150, 243, 0.3)';
+                document.body.appendChild(flash);
+                
+                // Create main explosion
+                const explosion = document.createElement('div');
+                explosion.className = `absolute inset-0 flex items-center justify-center z-40 explosion ${result === '+' ? 'explosion-positive' : 'explosion-negative'}`;
+                explosion.style.borderRadius = '50%';
+                container.appendChild(explosion);
+                
+                // Create explosion text
+                const explosionText = document.createElement('div');
+                explosionText.className = 'text-6xl font-bold text-white z-50';
+                explosionText.textContent = result === '+' ? '💥 BOOM! 💥' : '❄️ CRASH! ❄️';
+                explosion.appendChild(explosionText);
+                
+                // Create shock waves
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        const shockWave = document.createElement('div');
+                        shockWave.className = `absolute inset-0 border-4 rounded-full shock-wave ${result === '+' ? 'border-red-400' : 'border-blue-400'}`;
+                        shockWave.style.borderColor = result === '+' ? '#ff6b6b' : '#4fc3f7';
+                        container.appendChild(shockWave);
+                        
+                        setTimeout(() => {
+                            if (shockWave.parentNode) {
+                                shockWave.parentNode.removeChild(shockWave);
+                            }
+                        }, 800);
+                    }, i * 150);
+                }
+                
+                // Create particles
+                const particleCount = 8;
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = `absolute w-6 h-6 rounded-full explosion-particles`;
+                    particle.style.backgroundColor = result === '+' ? '#ff3838' : '#2196f3';
+                    particle.style.left = '50%';
+                    particle.style.top = '50%';
+                    particle.style.transform = `translate(-50%, -50%) rotate(${i * 45}deg) translateY(-100px)`;
+                    container.appendChild(particle);
+                    
+                    setTimeout(() => {
+                        if (particle.parentNode) {
+                            particle.parentNode.removeChild(particle);
+                        }
+                    }, 1200);
+                }
+                
+                // Play explosion sound effect (visual representation)
+                const soundEffect = document.createElement('div');
+                soundEffect.className = 'absolute top-4 left-4 text-2xl font-bold z-50';
+                soundEffect.style.color = result === '+' ? '#ff6b6b' : '#4fc3f7';
+                soundEffect.textContent = result === '+' ? '🔥 KABOOM! 🔥' : '❄️ FREEZE! ❄️';
+                container.appendChild(soundEffect);
+                
+                // Clean up all effects
+                setTimeout(() => {
+                    if (flash.parentNode) flash.parentNode.removeChild(flash);
+                    if (explosion.parentNode) explosion.parentNode.removeChild(explosion);
+                    if (soundEffect.parentNode) soundEffect.parentNode.removeChild(soundEffect);
+                    resolve();
+                }, 1500);
+            });
+        }
+
+        // Initialize
+        updateControls();
+        generateQuestion();
+
+        // Add some visual flair
+        setInterval(() => {
+            if (!force1.classList.contains('collision')) {
+                force1.classList.toggle('pulse');
+            }
+            if (!force2.classList.contains('collision')) {
+                force2.classList.toggle('pulse');
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
